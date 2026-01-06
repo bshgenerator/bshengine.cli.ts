@@ -1,0 +1,64 @@
+{
+  "name": "@bshsolutions/cli",
+  "version": "0.0.1",
+  "description": "A CLI for BSH Engine <https://engine.bousalih.com>",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "bshg": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "prepublishOnly": "npm run build",
+    "clean": "rm -rf dist",
+    "demo": "tsx demo/demo.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "cli": "tsx src/cli.ts",
+    "cli:build": "npm run build && node dist/cli.js"
+  },
+  "keywords": [
+    "bsh-solutions",
+    "bsh-engine",
+    "cli",
+    "typescript"
+  ],
+  "author": "Bousalih Hamza <hamza.bousalih.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bshgenerator/bshengine.cli.ts.git"
+  },
+  "homepage": "https://engine.bousalih.com",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@bshsolutions/sdk": "latest",
+    "commander": "^14.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^2.0.0"
+  },
+  "overrides": {
+    "esbuild": "^0.25.0"
+  }
+}

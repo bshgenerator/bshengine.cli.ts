@@ -1,6 +1,7 @@
 import type { BshEngineConfig, InstallOptions } from '@plugin/types';
 import { PluginManager } from '@plugin/core/manager';
 import { PluginException } from '@plugin/errors';
+import { logger } from '@src/logger';
 
 export async function installPlugin(
   config: BshEngineConfig,
@@ -14,8 +15,8 @@ export async function installPlugin(
     }
 
     if (verbose) {
-      console.log('========================================');
-      console.log('Installing plugins...');
+      logger.separator();
+      logger.info('Installing plugins...');
     }
 
     const manager = new PluginManager(config);
@@ -25,13 +26,13 @@ export async function installPlugin(
     });
 
     if (verbose) {
-      console.log('Plugin installation completed successfully!');
+      logger.success('Plugin installation completed successfully!');
     }
   } catch (error) {
     if (error instanceof PluginException) {
-      console.error(`ERROR: ${error.status} - ${error.message}`);
+      logger.error(`ERROR: ${error.status} - ${error.message}`);
     } else {
-      console.error(`ERROR: 500 - Error installing plugin: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`ERROR: 500 - Error installing plugin: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

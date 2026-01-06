@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { installPlugin } from '@plugin/api';
 import type { BshEngineConfig } from '@plugin/types';
+import { logger } from '@src/logger';
 
 export type InstallCommandOptions = {
   host: string;
@@ -38,7 +39,7 @@ export function createInstallCommand(): Command {
       await installPlugin(config, { pluginDir, verbose });
       process.exit(0);
     } catch (error) {
-      console.error('Error:', error instanceof Error ? error.message : String(error));
+      logger.error('Error:', error instanceof Error ? error.message : String(error));
       process.exit(1);
     }
   });

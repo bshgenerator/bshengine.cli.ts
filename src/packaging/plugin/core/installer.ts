@@ -11,6 +11,7 @@ import type {
 } from '@plugin/types';
 import { JsonResolver } from '@plugin/utils/variable-resolver';
 import { BshEntities } from '@bshsolutions/sdk/dist/types';
+import { logger } from '@src/logger';
 
 const BSH_ENTITIES = 'BshEntities';
 const BSH_PLUGINS = 'BshPlugins';
@@ -63,26 +64,6 @@ export abstract class BasePluginInstaller {
     }
 
     const manifest = bshEntitiesContent.manifest;
-    let bshEntity: unknown = null;
-
-    // Find and process BshEntities.json
-    for (const pluginPath of bshEntitiesContent.files) {
-      if (pluginPath.fileName === 'BshEntities.json') {
-        const json = await this.readJson(pluginPath, config, manifest);
-        bshEntity = json;
-
-        // Create the entity table
-        // Note: In Java this uses dasService.dbTablesOperations().createBshEntity()
-        // In TS, we might need to call a specific API endpoint or skip this step
-        // For now, we'll just log it
-        console.log('BshEntity definition found, table creation should be handled by engine');
-      }
-    }
-
-    if (bshEntity === null) {
-      console.warn('No BshEntities definition found in the plugin');
-      return;
-    }
 
     // Insert all records from BshEntities content
     for (const file of bshEntitiesContent.files) {
@@ -137,7 +118,7 @@ export abstract class BasePluginInstaller {
           await this.getBshEntity()
         );
       } catch (error) {
-        console.warn(
+        logger.warn(
           `Insert to '${targetEntity}' from '${file.fileName}' failed:`,
           error instanceof Error ? error.message : String(error)
         );
@@ -210,7 +191,7 @@ export abstract class BasePluginInstaller {
           addPluginField(item as Record<string, unknown>);
           await this.insertEntityRecord(targetEntity, item, file, i);
         } else {
-          console.warn(
+          logger.warn(
             `Insert to '${targetEntity}' [${i}] from '${file.fileName}' Failed, expecting object not ${typeof item}`
           );
         }
@@ -232,18 +213,19 @@ export abstract class BasePluginInstaller {
         payload: payload as Record<string, unknown>,
         onSuccess: () => {
           const indexStr = index !== undefined ? ` [${index}]` : '';
-          console.log(
+          logger.info(
             `Insert to '${targetEntity}'${indexStr} from '${file.fileName}'`
           );
           resolve();
         },
         onError: (error) => {
           const indexStr = index !== undefined ? ` [${index}]` : '';
-          console.error(
+          const errorMessage = this.formatError(error);
+          logger.error(
             `Insert to '${targetEntity}'${indexStr} from '${file.fileName}' failed:`,
-            error
+            errorMessage
           );
-          reject(error);
+          reject(new Error(errorMessage));
         },
       });
     });
@@ -257,8 +239,36 @@ export abstract class BasePluginInstaller {
       if (response?.data && response.data.length > 0) {
         return response.data[0];
       }
-    } catch {
+    } catch (error) {
+      const errorMessage = this.formatError(error);
+      logger.error(`Failed to get BshEntity: ${errorMessage}`);
+      return undefined;
     }
+  }
+
+  private formatError(error: unknown): string {
+    if (error instanceof Error) {
+      // Check for connection errors
+      const errorString = error.toString();
+      const cause = (error as any).cause;
+      
+      // Check if cause is a Node.js system error with connection details
+      if (cause && typeof cause === 'object' && 'code' in cause) {
+        const sysError = cause as { code?: string; address?: string; port?: number };
+        if (sysError.code === 'ECONNREFUSED') {
+          const address = sysError.address || 'unknown';
+          const port = sysError.port || 'unknown';
+          return `Connection refused to ${address}:${port}. Please ensure the BshEngine server is running and accessible at the configured host.`;
+        }
+      }
+      
+      if (errorString.includes('ECONNREFUSED') || errorString.includes('fetch failed')) {
+        return `Connection failed. Please ensure the BshEngine server is running and accessible at the configured host. Original error: ${error.message}`;
+      }
+      
+      return error.message;
+    }
+    return String(error);
   }
 
   protected abstract readJson(

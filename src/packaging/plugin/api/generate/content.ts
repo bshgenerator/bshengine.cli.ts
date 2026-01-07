@@ -94,7 +94,8 @@ export async function generateContentFile(
   manifestDir: string,
   entity: string,
   override: boolean = false,
-  options: Record<string, any> = {}
+  options: Record<string, any> = {},
+  skipPrompts: boolean = false
 ): Promise<void> {
   const currentDir = process.cwd();
   const pluginConfigPath = join(currentDir, CONFIG_FILE);
@@ -121,44 +122,49 @@ export async function generateContentFile(
     // Create a deep copy of the template and replace placeholders with null
     const templateCopy = replacePlaceholders(JSON.parse(JSON.stringify(templateConfig.template)));
 
-    // Prepare prompt fields for each variable
-    const promptFields: PromptField[] = templateConfig.variables.map(variable => {
-      // Determine default value: priority: defaultFromOption > default > null
-      let defaultValue: any = null;
-      if (variable.defaultFromOption && options[variable.defaultFromOption] !== undefined) {
-        defaultValue = options[variable.defaultFromOption];
-      } else if (variable.default !== undefined) {
-        defaultValue = variable.default;
-      }
+    // Prepare and apply values for each variable
+    let userValues: Record<string, any> = {};
 
-      // Build question text with allowed values if present
-      let questionText = `${variable.name} (${variable.type})`;
+    if (!skipPrompts) {
+      // Prepare prompt fields for each variable
+      const promptFields: PromptField[] = templateConfig.variables.map(variable => {
+        // Determine default value: priority: defaultFromOption > default > null
+        let defaultValue: any = null;
+        if (variable.defaultFromOption && options[variable.defaultFromOption] !== undefined) {
+          defaultValue = options[variable.defaultFromOption];
+        } else if (variable.default !== undefined) {
+          defaultValue = variable.default;
+        }
 
-      if (defaultValue !== null && defaultValue !== undefined) {
-        questionText += ` [default: ${JSON.stringify(defaultValue)}]`;
-      }
+        // Build question text with allowed values if present
+        let questionText = `${variable.name} (${variable.type})`;
 
-      questionText += ': ';
+        if (defaultValue !== null && defaultValue !== undefined) {
+          questionText += ` [default: ${JSON.stringify(defaultValue)}]`;
+        }
 
-      return {
-        name: variable.name,
-        question: questionText,
-        type: variable.type,
-        defaultValue: defaultValue,
-        allowedValues: variable.allowedValues
-      };
-    });
+        questionText += ': ';
 
-    // Prompt user for values
-    logger.info(`\nPlease provide values for the following fields (press Enter to use default):\n`);
-    const userValues = await promptMultiple(promptFields);
+        return {
+          name: variable.name,
+          question: questionText,
+          type: variable.type,
+          defaultValue: defaultValue,
+          allowedValues: variable.allowedValues
+        };
+      });
+
+      // Prompt user for values
+      logger.info(`\nPlease provide values for the following fields (press Enter to use default):\n`);
+      userValues = await promptMultiple(promptFields);
+    }
 
     // Apply user values to template at their target paths
     for (const variable of templateConfig.variables) {
       let value = userValues[variable.name];
 
-      // If value is undefined or empty string, determine what to use
-      if (value === undefined || value === '' || (value === null && variable.type !== 'boolean')) {
+      // If prompts are skipped or value is undefined/empty, use defaults
+      if (skipPrompts || value === undefined || value === '' || (value === null && variable.type !== 'boolean')) {
         if (variable.defaultFromOption && options[variable.defaultFromOption] !== undefined) value = options[variable.defaultFromOption];
         else if (variable.default !== undefined) value = variable.default;
         else value = null;
@@ -167,6 +173,8 @@ export async function generateContentFile(
       // Set value at target path (always set, even if null, to replace placeholders)
       setValueAtPath(templateCopy, variable.target, value);
     }
+
+    if (skipPrompts) logger.info(`Using default values for all fields (prompts disabled).`);
 
     // Write the new content file with the template structure
     await writeFile(contentFilePath, JSON.stringify(templateCopy, null, 2) + '\n', 'utf-8');

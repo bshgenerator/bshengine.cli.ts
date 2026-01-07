@@ -68,15 +68,18 @@ export function createGenerateCommand(): Command {
     .requiredOption('-m, --manifest <manifest>', 'Manifest directory name where the file will be created')
     .option('-e, --entity <entity>', 'Entity name to get the JSON structure from (e.g., BshPolicies, BshEntities)')
     .option('-o, --override', 'Override existing content file if it exists')
-    .action(async (name: string, options: { manifest: string; entity: string; override?: boolean }) => {
+    .option('--skipprompts', 'Skip interactive prompts and use default values only')
+    .action(async (name: string, options: { manifest: string; entity: string; override?: boolean; skipprompts?: boolean }) => {
       try {
+        logger.info(JSON.stringify(options, null, 2));
         // Pass options object with 'name' for defaultFromOption support
         await generateContentFile(
           name, 
           options.manifest, 
           options.entity || options.manifest, 
           options.override || false,
-          { name } // Pass name as option for defaultFromOption
+          { name }, // Pass name as option for defaultFromOption
+          options.skipprompts || false
         );
         process.exit(0);
       } catch (error) {

@@ -8,6 +8,7 @@ import { createGenerateCommand } from './cmds/generate';
  */
 export function createPluginsCommand(): Command {
   const pluginsCommand = new Command('plugins')
+    .alias('p')
     .description('Manage BSH Engine plugins');
 
   // Register all plugin commands

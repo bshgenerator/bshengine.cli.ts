@@ -20,7 +20,8 @@
     "paths": {
       "@src/*": ["src/*"],
       "@packaging/*": ["src/packaging/*"],
-      "@plugin/*": ["src/packaging/plugin/*"]
+      "@plugin/*": ["src/packaging/plugin/*"],
+      "@utils/*": ["src/utils/*"]
     }
   },
   "include": ["src/**/*", "__tests__/**/*"],

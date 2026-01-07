@@ -75,11 +75,11 @@ export async function generatePlugin(
 
     logger.success(`Plugin "${pluginName}" generated at: ${finalPluginPath}`);
 
-    // Remove sample.json files if clean option is enabled
-    if (clean) await removeSampleFiles(finalPluginPath);
-
     // Prompt user for plugin information
-    await promptForPluginInfo(finalPluginPath, pluginName);
+    const userResponse = await promptForPluginInfo(finalPluginPath, pluginName);
+
+    // Remove sample.json files if clean option is enabled
+    if (clean || userResponse.clean) await removeSampleFiles(finalPluginPath);
   } catch (error) {
     // Clean up temp directory on error
     try {
@@ -166,7 +166,7 @@ async function removeSampleFiles(pluginPath: string): Promise<void> {
 /**
  * Prompts the user for plugin information and updates bshplugin.json
  */
-async function promptForPluginInfo(pluginPath: string, pluginName: string): Promise<void> {
+async function promptForPluginInfo(pluginPath: string, pluginName: string): Promise<Record<string, string>> {
   const bshpluginJsonPath = join(pluginPath, 'bshplugin.json');
 
   try {
@@ -174,7 +174,7 @@ async function promptForPluginInfo(pluginPath: string, pluginName: string): Prom
     const fileExistsCheck = await fileExists(bshpluginJsonPath);
     if (!fileExistsCheck) {
       logger.warn('bshplugin.json not found, skipping plugin config update');
-      return;
+      return {};
     }
 
     // Read the current bshplugin.json
@@ -184,13 +184,14 @@ async function promptForPluginInfo(pluginPath: string, pluginName: string): Prom
     logger.info('Please provide plugin information (press Enter to skip):');
 
     // Prompt for all plugin fields
-    const userInput = await promptMultiple([
-      { name: 'id', question: `Plugin ID (${pluginName}): ` },
-      { name: 'name', question: `Plugin Name (${pluginName}): ` },
-      { name: 'description', question: 'Plugin Description: ' },
-      { name: 'author', question: 'Plugin Author: ' },
-      { name: 'version', question: 'Plugin Version (0.0.1): ' },
-      { name: 'license', question: 'License (MIT): ' },
+    let userInput = await promptMultiple([
+      { name: 'id', question: `Plugin ID (${pluginName}): `, type: 'string', defaultValue: pluginName },
+      { name: 'name', question: `Plugin Name (${pluginName}): `, type: 'string', defaultValue: pluginName },
+      { name: 'description', question: 'Plugin Description: ', type: 'string', defaultValue: '' },
+      { name: 'author', question: 'Plugin Author: ', type: 'string', defaultValue: '' },
+      { name: 'version', question: 'Plugin Version (0.0.1): ', type: 'string', defaultValue: '0.0.1' },
+      { name: 'license', question: 'License (MIT): ', type: 'string', defaultValue: 'MIT' },
+      { name: 'clean', question: 'Remove sample files (y/n): ', type: 'boolean', defaultValue: false },
     ]);
 
     // Update only fields where user provided input
@@ -205,9 +206,11 @@ async function promptForPluginInfo(pluginPath: string, pluginName: string): Prom
     // Write the updated configuration back to file
     await writeFile(bshpluginJsonPath, JSON.stringify(pluginConfig, null, 2) + '\n', 'utf-8');
 
-    logger.success('Plugin information updated');
+    logger.info('bshplugin.json updated');
+    return userInput;
   } catch (error) {
     logger.warn('Failed to update plugin information:', error instanceof Error ? error.message : String(error));
     // Don't throw - allow the plugin generation to succeed even if info update fails
+    return {};
   }
 }

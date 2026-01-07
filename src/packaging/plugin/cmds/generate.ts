@@ -70,7 +70,14 @@ export function createGenerateCommand(): Command {
     .option('-o, --override', 'Override existing content file if it exists')
     .action(async (name: string, options: { manifest: string; entity: string; override?: boolean }) => {
       try {
-        await generateContentFile(name, options.manifest, options.entity || options.manifest, options.override || false);
+        // Pass options object with 'name' for defaultFromOption support
+        await generateContentFile(
+          name, 
+          options.manifest, 
+          options.entity || options.manifest, 
+          options.override || false,
+          { name } // Pass name as option for defaultFromOption
+        );
         process.exit(0);
       } catch (error) {
         logger.error('Error:', error instanceof Error ? error.message : String(error));

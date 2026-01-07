@@ -135,14 +135,38 @@ export const CONTENT_TEMPLATES: Record<string, ContentTemplate> = {
         template: BshEntitiesTemplate,
         variables: [
             { name: 'name', type: 'string', target: '$.name', defaultFromOption: 'name' },
-            { name: 'bshSchema', type: 'string', target: '$.bshSchema' },
+            { name: 'bshSchema', type: 'string', target: '$.bshSchema', defaultFromOption: 'name' },
             { name: 'dbTable', type: 'string', target: '$.dbTable', defaultFromOption: 'name' },
             { name: 'dbSchema', type: 'string', target: '$.dbSchema' },
-            { name: 'updateStrategy', type: 'string', target: '$.updateStrategy', default: 'Upsert' },
-            { name: 'insertDuplicate', type: 'string', target: '$.insertDuplicate', default: 'Error' },
+            {
+                name: 'updateStrategy',
+                type: 'string',
+                target: '$.updateStrategy',
+                default: 'Upsert',
+                allowedValues: ['Upsert', 'Replace']
+            },
+            {
+                name: 'insertDuplicate',
+                type: 'string',
+                target: '$.insertDuplicate',
+                default: 'Error',
+                allowedValues: ['Upsert', 'Error']
+            },
             { name: 'pk-key', type: 'string', target: '$.pks[0].key', default: 'id' },
-            { name: 'pk-strategy', type: 'string', target: '$.pks[0].strategy', default: 'AutoIncrement' },
-            { name: 'pk-type', type: 'string', target: '$.pks[0].type', default: 'number' },
+            {
+                name: 'pk-strategy',
+                type: 'string',
+                target: '$.pks[0].strategy',
+                default: 'AutoIncrement',
+                allowedValues: ['AutoIncrement', 'UUID', 'Fixed']
+            },
+            {
+                name: 'pk-type',
+                type: 'string',
+                target: '$.pks[0].type',
+                default: 'number',
+                allowedValues: ['number', 'string']
+            },
         ]
     },
     BshSchemas: {
@@ -158,7 +182,12 @@ export const CONTENT_TEMPLATES: Record<string, ContentTemplate> = {
         variables: [
             { name: 'name', type: 'string', target: '$.name', defaultFromOption: 'name' },
             { name: 'label', type: 'string', target: '$.label', defaultFromOption: 'name' },
-            { name: 'baseType', type: 'string', target: '$.baseType', default: 'string' },
+            {
+                name: 'baseType',
+                type: 'string',
+                target: '$.baseType',
+                default: 'string'
+            },
         ]
     },
     BshRoles: {

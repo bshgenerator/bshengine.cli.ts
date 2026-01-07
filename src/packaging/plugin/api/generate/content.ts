@@ -131,16 +131,21 @@ export async function generateContentFile(
         defaultValue = variable.default;
       }
 
-      // Build question text
-      const questionText = defaultValue !== null
-        ? `${variable.name} (${variable.type}) [default: ${JSON.stringify(defaultValue)}]: `
-        : `${variable.name} (${variable.type}): `;
+      // Build question text with allowed values if present
+      let questionText = `${variable.name} (${variable.type})`;
+
+      if (defaultValue !== null && defaultValue !== undefined) {
+        questionText += ` [default: ${JSON.stringify(defaultValue)}]`;
+      }
+
+      questionText += ': ';
 
       return {
         name: variable.name,
         question: questionText,
         type: variable.type,
-        defaultValue: defaultValue
+        defaultValue: defaultValue,
+        allowedValues: variable.allowedValues
       };
     });
 

@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { generatePlugin, generateManifestDirectory } from '@plugin/api/generate';
+import { generatePlugin, generateManifestDirectory, generateContentFile } from '@plugin/api/generate';
 import { logger } from '@src/logger';
 
 export const TEMPLATE_REPO_URL = 'https://github.com/bshgenerator/bshengine.plugin.template.git';
@@ -60,7 +60,26 @@ export function createGenerateCommand(): Command {
       }
     });
 
+  // Content generation subcommand
+  const contentCommand = new Command('content')
+    .alias('c')
+    .description('Generate a new content file inside a manifest directory')
+    .argument('<name>', 'Name of the content file to create (without .json extension)')
+    .requiredOption('-m, --manifest <manifest>', 'Manifest directory name where the file will be created')
+    .option('-e, --entity <entity>', 'Entity name to get the JSON structure from (e.g., BshPolicies, BshEntities)')
+    .option('-o, --override', 'Override existing content file if it exists')
+    .action(async (name: string, options: { manifest: string; entity: string; override?: boolean }) => {
+      try {
+        await generateContentFile(name, options.manifest, options.entity || options.manifest, options.override || false);
+        process.exit(0);
+      } catch (error) {
+        logger.error('Error:', error instanceof Error ? error.message : String(error));
+        process.exit(1);
+      }
+    });
+
   command.addCommand(manifestCommand);
+  command.addCommand(contentCommand);
 
   return command;
 }

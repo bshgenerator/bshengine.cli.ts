@@ -44,9 +44,15 @@ export function createGenerateCommand(): Command {
     .description('Generate a new manifest directory')
     .argument('<name>', 'Name of the manifest directory to create')
     .option('-t, --target <target>', 'Target Entity (dir name)')
-    .action(async (name: string, options: { target?: string }) => {
+    .option('-d, --dependencies <dependencies>', 'Comma-separated list of additional dependencies (BshEntities is always included)')
+    .action(async (name: string, options: { target?: string; dependencies?: string }) => {
       try {
-        await generateManifestDirectory(name, options.target);
+        // Parse dependencies: split by comma, trim whitespace, filter empty strings
+        const additionalDependencies = options.dependencies
+          ? options.dependencies.split(',').map(dep => dep.trim()).filter(dep => dep.length > 0)
+          : undefined;
+
+        await generateManifestDirectory(name, options.target, additionalDependencies);
         process.exit(0);
       } catch (error) {
         logger.error('Error:', error instanceof Error ? error.message : String(error));

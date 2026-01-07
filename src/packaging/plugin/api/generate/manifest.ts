@@ -7,7 +7,11 @@ import { CONFIG_FILE } from '@plugin/utils/plugin-path';
 /**
  * Generate a manifest directory with __manifest__.json
  */
-export async function generateManifestDirectory(name: string, targetOverride?: string): Promise<void> {
+export async function generateManifestDirectory(
+  name: string,
+  targetOverride?: string,
+  additionalDependencies?: string[]
+): Promise<void> {
   const currentDir = process.cwd();
   const pluginConfigPath = join(currentDir, CONFIG_FILE);
   const manifestDirPath = join(currentDir, name);
@@ -30,10 +34,18 @@ export async function generateManifestDirectory(name: string, targetOverride?: s
     // Create the directory
     await mkdir(manifestDirPath, { recursive: false });
 
+    // Build dependencies array: always include BshEntities, then add additional dependencies
+    const dependencies = ['BshEntities'];
+    if (additionalDependencies && additionalDependencies.length > 0) {
+      // Filter out duplicates and BshEntities if it was already added
+      const uniqueDeps = additionalDependencies.filter(dep => dep !== 'BshEntities');
+      dependencies.push(...uniqueDeps);
+    }
+
     // Create the manifest file content
     const manifestContent = {
       target: target,
-      dependencies: ['BshEntities']
+      dependencies: dependencies
     };
 
     // Write the manifest file

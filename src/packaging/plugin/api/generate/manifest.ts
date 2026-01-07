@@ -35,12 +35,15 @@ export async function generateManifestDirectory(
     await mkdir(manifestDirPath, { recursive: false });
 
     // Build dependencies array: always include BshEntities, then add additional dependencies
-    const dependencies = ['BshEntities'];
+    let dependencies = ['BshEntities'];
     if (additionalDependencies && additionalDependencies.length > 0) {
       // Filter out duplicates and BshEntities if it was already added
       const uniqueDeps = additionalDependencies.filter(dep => dep !== 'BshEntities');
       dependencies.push(...uniqueDeps);
     }
+
+    // avoid self dependency
+    dependencies = dependencies.filter((dep) => dep !== target);
 
     // Create the manifest file content
     const manifestContent = {

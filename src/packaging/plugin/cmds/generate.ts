@@ -71,7 +71,6 @@ export function createGenerateCommand(): Command {
     .option('--skipprompts', 'Skip interactive prompts and use default values only')
     .action(async (name: string, options: { manifest: string; entity: string; override?: boolean; skipprompts?: boolean }) => {
       try {
-        logger.info(JSON.stringify(options, null, 2));
         // Pass options object with 'name' for defaultFromOption support
         await generateContentFile(
           name, 

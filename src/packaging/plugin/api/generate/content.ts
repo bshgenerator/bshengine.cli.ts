@@ -117,6 +117,7 @@ export async function generateContentFile(
   const contentFilePath = join(manifestDirPath, `${name}.json`);
   const contentExists = await fileExists(contentFilePath);
   if (contentExists && !override) throw new Error(`File "${name}.json" already exists in manifest "${manifestDir}"! Try with --override option.`);
+  if (contentExists && override) logger.info(`overriding file "${name}.json" in manifest "${manifestDir}"`);
 
   try {
     // Create a deep copy of the template and replace placeholders with null

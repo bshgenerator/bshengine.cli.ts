@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { rm, rename, access, readFile, writeFile } from 'fs/promises';
+import { rm, rename, access, readFile, writeFile, readdir } from 'fs/promises';
 import { join, resolve } from 'path';
 import { tmpdir } from 'os';
 import { logger } from '@src/logger';
@@ -26,7 +26,8 @@ async function directoryExists(path: string): Promise<boolean> {
 export async function generatePlugin(
   targetDir: string,
   pluginName: string,
-  templateUrl: string
+  templateUrl: string,
+  clean: boolean = false
 ): Promise<void> {
   const resolvedTargetDir = resolve(targetDir);
   const finalPluginPath = join(resolvedTargetDir, pluginName);
@@ -73,7 +74,10 @@ export async function generatePlugin(
     await rename(tempDir, finalPluginPath);
 
     logger.success(`Plugin "${pluginName}" generated at: ${finalPluginPath}`);
-    
+
+    // Remove sample.json files if clean option is enabled
+    if (clean) await removeSampleFiles(finalPluginPath);
+
     // Prompt user for plugin information
     await promptForPluginInfo(finalPluginPath, pluginName);
   } catch (error) {
@@ -111,11 +115,60 @@ async function fileExists(path: string): Promise<boolean> {
 }
 
 /**
+ * Recursively find and remove all sample.json files from the plugin directory
+ * Also removes the BshConfigurations directory
+ */
+async function removeSampleFiles(pluginPath: string): Promise<void> {
+  try {
+    logger.info(`Cleaning...`);
+
+    const sampleFiles: string[] = [];
+
+    /**
+     * Recursively search for sample.json files
+     */
+    async function findSampleFiles(dir: string): Promise<void> {
+      const entries = await readdir(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = join(dir, entry.name);
+
+        if (entry.isDirectory()) {
+          // Recursively search in subdirectories
+          await findSampleFiles(fullPath);
+        } else if (entry.isFile() && entry.name === 'sample.json') {
+          sampleFiles.push(fullPath);
+        }
+      }
+    }
+
+    await findSampleFiles(pluginPath);
+
+    // Remove sample.json files
+    if (sampleFiles.length > 0) {
+      for (const file of sampleFiles) {
+        await rm(file, { force: true });
+      }
+    }
+
+    // Remove BshConfigurations directory
+    const bshConfigurationsPath = join(pluginPath, 'BshConfigurations');
+    const bshConfigurationsExists = await directoryExists(bshConfigurationsPath);
+    if (bshConfigurationsExists) {
+      await rm(bshConfigurationsPath, { recursive: true, force: true });
+    }
+  } catch (error) {
+    logger.warn('Failed to remove sample files and directories:', error instanceof Error ? error.message : String(error));
+    // Don't throw - allow the plugin generation to succeed even if cleanup fails
+  }
+}
+
+/**
  * Prompts the user for plugin information and updates bshplugin.json
  */
 async function promptForPluginInfo(pluginPath: string, pluginName: string): Promise<void> {
   const bshpluginJsonPath = join(pluginPath, 'bshplugin.json');
-  
+
   try {
     // Check if bshplugin.json exists
     const fileExistsCheck = await fileExists(bshpluginJsonPath);
@@ -151,7 +204,7 @@ async function promptForPluginInfo(pluginPath: string, pluginName: string): Prom
 
     // Write the updated configuration back to file
     await writeFile(bshpluginJsonPath, JSON.stringify(pluginConfig, null, 2) + '\n', 'utf-8');
-    
+
     logger.success('Plugin information updated');
   } catch (error) {
     logger.warn('Failed to update plugin information:', error instanceof Error ? error.message : String(error));

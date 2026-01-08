@@ -21,7 +21,8 @@
       "@src/*": ["src/*"],
       "@packaging/*": ["src/packaging/*"],
       "@plugin/*": ["src/packaging/plugin/*"],
-      "@utils/*": ["src/utils/*"]
+      "@utils/*": ["src/utils/*"],
+      "@docker/*": ["src/docker/*"]
     }
   },
   "include": ["src/**/*", "__tests__/**/*"],

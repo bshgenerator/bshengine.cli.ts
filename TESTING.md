@@ -10,13 +10,13 @@ npm run build
 npm link
 
 # Test help
-bshg --help
+bsh --help
 
 # Test install command help
-bshg install --help
+bsh install --help
 
 # Test install command (with your actual values)
-bshg install ./demo/plugins/store \
+bsh install ./demo/plugins/store \
    --host https://your-engine-host.com \
    --api-key your-api-key
 

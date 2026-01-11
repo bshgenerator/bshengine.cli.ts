@@ -129,6 +129,10 @@ async function generatePluginWithTemplate(
 
     // Remove sample.json files if clean option is enabled
     if (clean || userResponse.clean) await removeSampleFiles(pluginPath);
+
+    // rm README.md & .gitignore
+    await rm(join(pluginPath, 'README.md'), { force: true });
+    await rm(join(pluginPath, '.gitignore'), { force: true });
 }
 
 /**

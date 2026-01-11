@@ -4,7 +4,7 @@
   "description": "A CLI for BSH Engine <https://engine.bousalih.com>",
   "type": "module",
   "bin": {
-    "bshg": "./dist/cli.js"
+    "bsh": "./dist/cli.js"
   },
   "files": [
     "dist"

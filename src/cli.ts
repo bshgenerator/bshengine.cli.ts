@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { createPluginsCommand } from '@plugin/cli';
 import { createDockerCommand } from '@docker/cli';
 
-// Create CLI program with version and name 'bshg'
+// Create CLI program with version and name 'bsh'
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -18,7 +18,7 @@ const packageJson = JSON.parse(
 const program = new Command();
 
 program
-  .name('bshg')
+  .name('bsh')
   .description('BSH Engine Manager - A CLI tool for managing BSH Engine')
   .version(packageJson.version);
 

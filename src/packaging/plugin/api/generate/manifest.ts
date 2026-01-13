@@ -10,7 +10,8 @@ import { CONFIG_FILE } from '@plugin/utils/plugin-path';
 export async function generateManifestDirectory(
   name: string,
   targetOverride?: string,
-  additionalDependencies?: string[]
+  additionalDependencies?: string[],
+  force: boolean = false
 ): Promise<void> {
   const currentDir = process.cwd();
   const pluginConfigPath = join(currentDir, CONFIG_FILE);
@@ -27,7 +28,12 @@ export async function generateManifestDirectory(
   // Check if directory already exists
   const dirExists = await directoryExists(manifestDirPath);
   if (dirExists) {
-    throw new Error(`Manifest "${name}" already exists`);
+    if (force) {
+      logger.info(`Overriding existing manifest "${name}"`);
+      await rm(manifestDirPath, { recursive: true, force: true });
+    } else {
+      throw new Error(`Manifest "${name}" already exists`);
+    }
   }
 
   try {

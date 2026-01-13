@@ -45,14 +45,15 @@ export function createGenerateCommand(): Command {
     .argument('<name>', 'Name of the manifest directory to create')
     .option('-t, --target <target>', 'Target Entity (dir name)')
     .option('-d, --dependencies <dependencies>', 'Comma-separated list of additional dependencies (BshEntities is always included)')
-    .action(async (name: string, options: { target?: string; dependencies?: string }) => {
+    .option('-f, --force', 'Override existing manifest directory if it exists')
+    .action(async (name: string, options: { target?: string; dependencies?: string; force?: boolean }) => {
       try {
         // Parse dependencies: split by comma, trim whitespace, filter empty strings
         const additionalDependencies = options.dependencies
           ? options.dependencies.split(',').map(dep => dep.trim()).filter(dep => dep.length > 0)
           : undefined;
 
-        await generateManifestDirectory(name, options.target, additionalDependencies);
+        await generateManifestDirectory(name, options.target, additionalDependencies, options.force || false);
         process.exit(0);
       } catch (error) {
         logger.error('Error:', error instanceof Error ? error.message : String(error));
@@ -67,16 +68,16 @@ export function createGenerateCommand(): Command {
     .argument('<name>', 'Name of the content file to create (without .json extension)')
     .requiredOption('-m, --manifest <manifest>', 'Manifest directory name where the file will be created')
     .option('-e, --entity <entity>', 'Entity name to get the JSON structure from (e.g., BshPolicies, BshEntities)')
-    .option('-o, --override', 'Override existing content file if it exists')
+    .option('-f, --force', 'Override existing content file if it exists')
     .option('--skipprompts', 'Skip interactive prompts and use default values only')
-    .action(async (name: string, options: { manifest: string; entity: string; override?: boolean; skipprompts?: boolean }) => {
+    .action(async (name: string, options: { manifest: string; entity: string; force?: boolean; skipprompts?: boolean }) => {
       try {
         // Pass options object with 'name' for defaultFromOption support
         await generateContentFile(
           name, 
           options.manifest, 
           options.entity || options.manifest, 
-          options.override || false,
+          options.force || false,
           { name }, // Pass name as option for defaultFromOption
           options.skipprompts || false
         );
